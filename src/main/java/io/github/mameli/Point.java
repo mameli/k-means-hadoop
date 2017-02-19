@@ -41,15 +41,14 @@ public class Point implements WritableComparable<Point> {
     }
 
     public String toString() {
-        return this.x + "\t" + this.y;
+        return this.x + " \t" + this.y;
     }
 
     public int compareTo(@Nonnull Point p) {
-        if (p.getX() == x && p.getY() == y)
+        if (p.getX().compareTo(this.x) == 0 && p.getY().compareTo(this.y) == 0) {
             return 0;
-        if (p.getX() != x && p.getY() != y)
-            return -1;
-        return 1;
+        }
+        return -1;
     }
 
     DoubleWritable getX() {
