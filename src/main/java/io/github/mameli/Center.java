@@ -40,6 +40,12 @@ public class Center extends Point {
         setIndex(c.getIndex());
     }
 
+    boolean isConverged(Center c, Double threshold) {
+        Double tempX = Math.pow(this.getX().get() - c.getX().get(), 2);
+        Double tempY = Math.pow(this.getY().get() - c.getY().get(), 2);
+        return threshold > Math.sqrt(tempX + tempY);
+    }
+
     public void readFields(DataInput dataInput) throws IOException {
         super.readFields(dataInput);
         index = new IntWritable(dataInput.readInt());

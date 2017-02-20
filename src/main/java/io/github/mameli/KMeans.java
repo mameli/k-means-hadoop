@@ -20,6 +20,9 @@ import java.util.Random;
 public class KMeans {
 
     public static void main(String[] args) throws Exception {
+        /*
+            Setup
+        */
         Configuration conf = new Configuration();
 
         Path input = new Path(args[0]);
@@ -27,19 +30,11 @@ public class KMeans {
         Path centers = new Path("centers/c.seq");
 
         conf.set("centersFilePath", centers.toString());
-        Job job = Job.getInstance(conf, "K means");
-        System.out.println("Input dir: " + args[0]);
-        System.out.println("Output dir: " + args[1]);
+        conf.setDouble("threshold", 0.01);
 
-        job.setJarByClass(KMeans.class);
-        job.setMapperClass(Map.class);
-        job.setCombinerClass(Combine.class);
-        job.setNumReduceTasks(1);
-        job.setReducerClass(Reduce.class);
+        int k = Integer.parseInt(args[2]);
+        conf.setInt("k", k);
 
-        /*
-            Cleanup
-         */
         FileSystem fs = FileSystem.get(conf);
         if (fs.exists(output)) {
             System.out.println("Delete old output folder: " + args[1]);
@@ -49,16 +44,41 @@ public class KMeans {
             System.out.println("Delete old centers folder: centers");
             fs.delete(centers, true);
         }
-        System.out.println("Generate random centers");
-        int k = Integer.parseInt(args[2]);
+
         createCenters(k, conf, centers);
+
+        long isConverged = 0;
+
+        while (isConverged != 1) {
+            Job job = Job.getInstance(conf, "K means");
+            job.setJarByClass(KMeans.class);
+            job.setMapperClass(Map.class);
+            job.setCombinerClass(Combine.class);
+            job.setNumReduceTasks(1);
+            job.setReducerClass(Reduce.class);
+
+            FileInputFormat.addInputPath(job, input);
+            FileOutputFormat.setOutputPath(job, output);
+            job.setMapOutputKeyClass(Center.class);
+            job.setMapOutputValueClass(Point.class);
+
+            job.waitForCompletion(true);
+
+            isConverged = job.getCounters().findCounter(Reduce.CONVERGE_COUNTER.CONVERGED).getValue();
+            if (isConverged != 1)
+                fs.delete(output, true);
+        }
+
+        System.out.println("Output results: Centers and linked points");
+        fs.delete(output, true);
+        Job job = Job.getInstance(conf, "K means");
+        job.setJarByClass(KMeans.class);
+        job.setMapperClass(Map.class);
 
         FileInputFormat.addInputPath(job, input);
         FileOutputFormat.setOutputPath(job, output);
         job.setMapOutputKeyClass(Center.class);
         job.setMapOutputValueClass(Point.class);
-        job.setOutputKeyClass(Center.class);
-        job.setOutputValueClass(Point.class);
 
         job.waitForCompletion(true);
     }
@@ -68,15 +88,15 @@ public class KMeans {
                 SequenceFile.Writer.file(centers),
                 SequenceFile.Writer.keyClass(IntWritable.class),
                 SequenceFile.Writer.valueClass(Center.class));
-//        Random r = new Random();
-        Double randomValueX = 1.0;//Math.floor(10.0 * r.nextDouble() * 100) / 100;
-        Double randomValueY = 3.0;//Math.floor(10.0 * r.nextDouble() * 100) / 100;
+        Random r = new Random();
+        Double randomValueX = Math.floor(100.0 * r.nextDouble() * 100) / 100;
+        Double randomValueY = Math.floor(100.0 * r.nextDouble() * 100) / 100;
         for (int i = 0; i < k; i++) {
             centerWriter.append(new IntWritable(i),
                     new Center(new DoubleWritable(randomValueX), new DoubleWritable(randomValueY))
             );
-            randomValueX = 7.0;//Math.floor(5.0 * r.nextDouble() * 100) / 100;
-            randomValueY = 5.0;//Math.floor(5.0 * r.nextDouble() * 100) / 100;
+            randomValueX = Math.floor(100.0 * r.nextDouble() * 100) / 100;
+            randomValueY = Math.floor(100.0 * r.nextDouble() * 100) / 100;
         }
         centerWriter.close();
     }

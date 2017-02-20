@@ -67,7 +67,8 @@ public class Map extends Mapper<Object, Text, Center, Point> {
                 minDistance = distanceTemp;
             }
         }
-        logger.error("P:" + p.toString() + " C: " + minDistanceCenter.getIndex() + " " + minDistanceCenter.toString());
+        if (minDistanceCenter != null)
+            logger.error("P:" + p.toString() + " C: " + minDistanceCenter.getIndex() + " " + minDistanceCenter.toString());
         context.write(new Center(minDistanceCenter), p);
     }
 
