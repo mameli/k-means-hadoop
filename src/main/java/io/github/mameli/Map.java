@@ -27,48 +27,46 @@ public class Map extends Mapper<Object, Text, Center, Point> {
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
-        logger.error("Centers stored in " + conf.get("centersFilePath"));
+        logger.fatal("Centers stored in " + conf.get("centersFilePath"));
         Path centersPath = new Path(conf.get("centersFilePath"));
         SequenceFile.Reader reader = new SequenceFile.Reader(conf, SequenceFile.Reader.file(centersPath));
         IntWritable key = new IntWritable();
         Center value = new Center();
         while (reader.next(key, value)) {
-            Center c = new Center(value.getX(), value.getY(), new IntWritable(key.get()), new IntWritable(0));
+            Center c = new Center(value.getListOfParameters());
+            c.setNumberOfPoints(new IntWritable(0));
+            c.setIndex(key);
             logger.info(c.getIndex());
             centers.add(c);
         }
         reader.close();
-        logger.error("Centri: " + centers.toString());
-        logger.error("Setup end");
-        logger.error("Points in file:");
+        logger.fatal("Centri: " + centers.toString());
+        logger.fatal("Setup end");
+        logger.fatal("Points in file:");
     }
 
     @Override
     public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
         String line = value.toString();
-        List<Double> spaceValues = new ArrayList<Double>();
+        List<DoubleWritable> spaceValues = new ArrayList<DoubleWritable>();
         StringTokenizer tokenizer = new StringTokenizer(line, ",");
         while (tokenizer.hasMoreTokens()) {
-            spaceValues.add(Double.parseDouble(tokenizer.nextToken()));
+            spaceValues.add(new DoubleWritable(Double.parseDouble(tokenizer.nextToken())));
         }
-        Point p = new Point(new DoubleWritable(spaceValues.get(0)), new DoubleWritable(spaceValues.get(1)));
+        Point p = new Point(spaceValues);
 
         Center minDistanceCenter = null;
         Double minDistance = Double.MAX_VALUE;
         Double distanceTemp;
-        Double tempX;
-        Double tempY;
         for (Center c : centers) {
-            tempX = Math.pow(p.getX().get() - c.getX().get(), 2);
-            tempY = Math.pow(p.getY().get() - c.getY().get(), 2);
-            distanceTemp = Math.sqrt(tempX + tempY);
+            distanceTemp = Distance.findDistance(c, p);
             if (minDistance > distanceTemp) {
                 minDistanceCenter = c;
                 minDistance = distanceTemp;
             }
         }
         if (minDistanceCenter != null)
-            logger.error("P:" + p.toString() + " C: " + minDistanceCenter.getIndex() + " " + minDistanceCenter.toString());
+            logger.fatal("P:" + p.toString() + " C min: " + minDistanceCenter.toString());
         context.write(new Center(minDistanceCenter), p);
     }
 

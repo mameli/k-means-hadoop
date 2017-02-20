@@ -3,7 +3,6 @@ package io.github.mameli;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -32,26 +31,27 @@ public class Reduce extends Reducer<Center, Point, IntWritable, Center> {
             throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
         Logger logger = Logger.getLogger(Reduce.class);
-        logger.error("Reducer ");
-        logger.error("center: " + key.toString());
+        logger.fatal("Reducer ");
+        logger.fatal("center: " + key.toString());
         int numElements = 0;
-        Double sumX = 0.0;
-        Double sumY = 0.0;
+        Double temp;
+        Center newCenter = new Center(conf.getInt("iParameters", 2));
         for (Point p : values) {
-            sumX += p.getX().get();
-            sumY += p.getY().get();
+            for (int i = 0; i < p.getListOfParameters().size(); i++) {
+                temp = newCenter.getListOfParameters().get(i).get() + p.getListOfParameters().get(i).get();
+                newCenter.getListOfParameters().get(i).set(temp);
+            }
             numElements += key.getNumberOfPoints().get();
         }
-        Center newCenter = new Center(new DoubleWritable(sumX / numElements),
-                new DoubleWritable(sumY / numElements),
-                new IntWritable(key.getIndex().get()),
-                new IntWritable(0));
+        newCenter.divideParameters(numElements);
+        newCenter.setIndex(key.getIndex());
+        newCenter.setNumberOfPoints(new IntWritable(0));
 
         if (key.isConverged(newCenter, conf.getDouble("threshold", 0.5)))
             iConvergedCenters++;
 
         centers.add(newCenter);
-        logger.error("New center: " + newCenter.toString());
+        logger.fatal("New center: " + newCenter.toString());
         context.write(newCenter.getIndex(), newCenter);
     }
 

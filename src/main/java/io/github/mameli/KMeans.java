@@ -9,8 +9,11 @@ import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -18,6 +21,7 @@ import java.util.Random;
  * Main class
  */
 public class KMeans {
+    private static Logger logger = Logger.getLogger(KMeans.class);
 
     public static void main(String[] args) throws Exception {
         /*
@@ -34,6 +38,8 @@ public class KMeans {
 
         int k = Integer.parseInt(args[2]);
         conf.setInt("k", k);
+        int iParameters = Integer.parseInt(args[3]);
+        conf.setInt("iParameters", iParameters);
 
         FileSystem fs = FileSystem.get(conf);
         if (fs.exists(output)) {
@@ -89,14 +95,16 @@ public class KMeans {
                 SequenceFile.Writer.keyClass(IntWritable.class),
                 SequenceFile.Writer.valueClass(Center.class));
         Random r = new Random();
-        Double randomValueX = Math.floor(100.0 * r.nextDouble() * 100) / 100;
-        Double randomValueY = Math.floor(100.0 * r.nextDouble() * 100) / 100;
+        List<DoubleWritable> listParameters = new ArrayList<DoubleWritable>();
+        Center tempC;
         for (int i = 0; i < k; i++) {
-            centerWriter.append(new IntWritable(i),
-                    new Center(new DoubleWritable(randomValueX), new DoubleWritable(randomValueY))
-            );
-            randomValueX = Math.floor(100.0 * r.nextDouble() * 100) / 100;
-            randomValueY = Math.floor(100.0 * r.nextDouble() * 100) / 100;
+            for (int j = 0; j < conf.getInt("iParameters", 2); j++) {
+                listParameters.add(new DoubleWritable(Math.floor(100.0 * r.nextDouble() * 100) / 100));
+            }
+            tempC = new Center(listParameters, new IntWritable(i), new IntWritable(0));
+            centerWriter.append(new IntWritable(i), tempC);
+            logger.fatal(tempC.toString());
+            listParameters = new ArrayList<DoubleWritable>();
         }
         centerWriter.close();
     }
