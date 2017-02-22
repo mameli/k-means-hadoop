@@ -73,18 +73,21 @@ public class Reduce extends Reducer<Center, Point, IntWritable, Center> {
                 SequenceFile.Writer.valueClass(Center.class));
         Iterator<Center> it = newCenters.values().iterator();
         Center temp;
+        Double avgValue = 0.0;
+        Double threshold = conf.getDouble("threshold", 0.5);
+        int k = conf.getInt("k", 2);
         while (it.hasNext()) {
             temp = it.next();
             temp.divideParameters();
-            logger.fatal("Media " + temp.toString());
-            logger.fatal("Old " + oldCenters.get(temp.getIndex()));
-            if (temp.isConverged(oldCenters.get(temp.getIndex()), conf.getDouble("threshold", 0.5)))
+            Center sameIndexC = oldCenters.get(temp.getIndex());
+            if (temp.isConverged(sameIndexC, threshold))
                 iConvergedCenters++;
+            avgValue += Math.pow(Distance.findDistance(temp, sameIndexC), 2);
             centerWriter.append(temp.getIndex(), temp);
-
         }
-
-        if (iConvergedCenters == newCenters.size())
+        avgValue = Math.sqrt(avgValue / k);
+        System.out.println("standard deviation " + avgValue);
+        if (iConvergedCenters == newCenters.size() || avgValue < threshold)
             context.getCounter(CONVERGE_COUNTER.CONVERGED).increment(1);
         centerWriter.close();
         logger.fatal("Converged " + iConvergedCenters);

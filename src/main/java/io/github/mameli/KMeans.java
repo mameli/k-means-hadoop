@@ -34,14 +34,15 @@ public class KMeans {
         Path centers = new Path("centers/c.seq");
 
         conf.set("centersFilePath", centers.toString());
-        conf.setDouble("threshold", 0.05);
+        conf.setDouble("threshold", 0.5);
 
         int k = Integer.parseInt(args[2]);
         conf.setInt("k", k);
         System.out.println("k: " + conf.getInt("k", 1));
         int iParameters = Integer.parseInt(args[3]);
         conf.setInt("iParameters", iParameters);
-        System.out.println("Parametri: " + conf.getInt("iParameters", 1));
+        System.out.println("Parameters: " + conf.getInt("iParameters", 1));
+        Job job;
 
         FileSystem fs = FileSystem.get(conf);
         if (fs.exists(output)) {
@@ -58,7 +59,7 @@ public class KMeans {
         long isConverged = 0;
         int iterations = 0;
         while (isConverged != 1) {
-            Job job = Job.getInstance(conf, "K means");
+            job = Job.getInstance(conf, "K means iter");
             job.setJarByClass(KMeans.class);
             job.setMapperClass(Map.class);
             job.setCombinerClass(Combine.class);
@@ -81,7 +82,7 @@ public class KMeans {
         System.out.println("Output results: Centers and linked points");
         System.out.println("Number of iterations\t" + iterations);
         fs.delete(output, true);
-        Job job = Job.getInstance(conf, "K means");
+        job = Job.getInstance(conf, "K means map");
         job.setJarByClass(KMeans.class);
         job.setMapperClass(Map.class);
 

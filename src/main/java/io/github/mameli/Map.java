@@ -40,9 +40,8 @@ public class Map extends Mapper<Object, Text, Center, Point> {
             centers.add(c);
         }
         reader.close();
-        logger.fatal("Centri: " + centers.toString());
+        logger.fatal("Centers: " + centers.toString());
         logger.fatal("Setup end");
-        logger.fatal("Points in file:");
     }
 
     @Override

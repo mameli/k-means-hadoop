@@ -15,7 +15,7 @@ hs_err_pid*
 .idea
 target/
 *.iml
-*.log
+*.log*
 
 # Input and output folders
 input/
