@@ -20,4 +20,5 @@ target/
 # Input and output folders
 input/
 out/
+output/
 centers/
