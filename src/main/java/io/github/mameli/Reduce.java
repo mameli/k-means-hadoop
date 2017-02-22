@@ -3,24 +3,23 @@ package io.github.mameli;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * Created by mameli on 19/02/2017.
- * <p>
  * k means reducer
  */
 public class Reduce extends Reducer<Center, Point, IntWritable, Center> {
-
-    private List<Center> centers = new ArrayList<Center>();
+    private Logger logger = Logger.getLogger(Reduce.class);
+    private HashMap<IntWritable, Center> newCenters = new HashMap<IntWritable, Center>();
+    private HashMap<IntWritable, Center> oldCenters = new HashMap<IntWritable, Center>();
     private int iConvergedCenters = 0;
 
     public enum CONVERGE_COUNTER {
@@ -31,27 +30,33 @@ public class Reduce extends Reducer<Center, Point, IntWritable, Center> {
     public void reduce(Center key, Iterable<Point> values, Context context)
             throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
-        Logger logger = Logger.getLogger(Reduce.class);
-        logger.error("Reducer ");
-        logger.error("center: " + key.toString());
+
+        logger.fatal("Reducer ");
+        logger.fatal("center: " + key.toString());
+        Center newCenter = new Center(conf.getInt("iParameters", 2));
+        boolean flagOld = false;
+        if (newCenters.containsKey(key.getIndex())) {
+            newCenter = newCenters.get(key.getIndex());
+            flagOld = true;
+        }
+
         int numElements = 0;
-        Double sumX = 0.0;
-        Double sumY = 0.0;
+        Double temp;
         for (Point p : values) {
-            sumX += p.getX().get();
-            sumY += p.getY().get();
+            for (int i = 0; i < p.getListOfParameters().size(); i++) {
+                temp = newCenter.getListOfParameters().get(i).get() + p.getListOfParameters().get(i).get();
+                newCenter.getListOfParameters().get(i).set(temp);
+            }
             numElements += key.getNumberOfPoints().get();
         }
-        Center newCenter = new Center(new DoubleWritable(sumX / numElements),
-                new DoubleWritable(sumY / numElements),
-                new IntWritable(key.getIndex().get()),
-                new IntWritable(0));
+        newCenter.setIndex(key.getIndex());
+        newCenter.addNumberOfPoints(new IntWritable(numElements));
 
-        if (key.isConverged(newCenter, conf.getDouble("threshold", 0.5)))
-            iConvergedCenters++;
+        if (!flagOld) {
+            newCenters.put(newCenter.getIndex(), newCenter);
+            oldCenters.put(key.getIndex(), new Center(key));
+        }
 
-        centers.add(newCenter);
-        logger.error("New center: " + newCenter.toString());
         context.write(newCenter.getIndex(), newCenter);
     }
 
@@ -66,11 +71,26 @@ public class Reduce extends Reducer<Center, Point, IntWritable, Center> {
                 SequenceFile.Writer.file(centersPath),
                 SequenceFile.Writer.keyClass(IntWritable.class),
                 SequenceFile.Writer.valueClass(Center.class));
-        for (Center c : centers) {
-            centerWriter.append(c.getIndex(), c);
+        Iterator<Center> it = newCenters.values().iterator();
+        Center temp;
+        Double avgValue = 0.0;
+        Double threshold = conf.getDouble("threshold", 0.5);
+        int k = conf.getInt("k", 2);
+        while (it.hasNext()) {
+            temp = it.next();
+            temp.divideParameters();
+            Center sameIndexC = oldCenters.get(temp.getIndex());
+            if (temp.isConverged(sameIndexC, threshold))
+                iConvergedCenters++;
+            avgValue += Math.pow(Distance.findDistance(temp, sameIndexC), 2);
+            centerWriter.append(temp.getIndex(), temp);
         }
-        if (iConvergedCenters == centers.size())
+        avgValue = Math.sqrt(avgValue / k);
+        System.out.println("standard deviation " + avgValue);
+        if (iConvergedCenters == newCenters.size() || avgValue < threshold)
             context.getCounter(CONVERGE_COUNTER.CONVERGED).increment(1);
         centerWriter.close();
+        logger.fatal("Converged " + iConvergedCenters);
     }
+
 }

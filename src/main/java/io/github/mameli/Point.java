@@ -7,63 +7,65 @@ import javax.annotation.Nonnull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
  * Created by mameli on 17/02/2017.
  * Point class
  */
-public class Point implements WritableComparable<Point> {
+public class Point implements WritableComparable<Center> {
 
-    private DoubleWritable x = new DoubleWritable(0.0);
+    private List<DoubleWritable> listOfParameters;
 
-    private DoubleWritable y = new DoubleWritable(0.0);
-
-    Point(DoubleWritable x, DoubleWritable y) {
-        this.x = x;
-        this.y = y;
+    Point(List<DoubleWritable> listOfParameters) {
+        this.listOfParameters = new ArrayList<DoubleWritable>();
+        for (DoubleWritable p : listOfParameters) {
+            this.listOfParameters.add(p);
+        }
     }
 
     Point() {
-        this.x = new DoubleWritable(0.0);
+        listOfParameters = new ArrayList<DoubleWritable>();
+    }
 
-        this.y = new DoubleWritable(0.0);
+    Point(int n) {
+        listOfParameters = new ArrayList<DoubleWritable>();
+        for (int i = 0; i < n; i++)
+            listOfParameters.add(new DoubleWritable(0.0));
     }
 
     public void readFields(DataInput dataInput) throws IOException {
-        x = new DoubleWritable(dataInput.readDouble());
-        y = new DoubleWritable(dataInput.readDouble());
+        int iParams = dataInput.readInt();
+        listOfParameters = new ArrayList<DoubleWritable>();
+        for (int i = 0; i < iParams; i++) {
+            listOfParameters.add(new DoubleWritable(dataInput.readDouble()));
+        }
     }
 
     public void write(DataOutput dataOutput) throws IOException {
-        dataOutput.writeDouble(getX().get());
-        dataOutput.writeDouble(getY().get());
+        dataOutput.writeInt(listOfParameters.size());
+        for (DoubleWritable p : listOfParameters) {
+            dataOutput.writeDouble(p.get());
+        }
     }
 
     public String toString() {
-        return this.x + " \t" + this.y;
-    }
-
-    public int compareTo(@Nonnull Point p) {
-        if (p.getX().compareTo(this.x) == 0 && p.getY().compareTo(this.y) == 0) {
-            return 0;
+        String elements = "";
+        for (DoubleWritable e : listOfParameters) {
+            elements += e.get() + ";";
         }
-        return -1;
+        return elements;
     }
 
-    DoubleWritable getX() {
-        return x;
+    public int compareTo(@Nonnull Center p) {
+        return 0;
     }
 
-    DoubleWritable getY() {
-        return y;
+
+    List<DoubleWritable> getListOfParameters() {
+        return listOfParameters;
     }
 
-    void setX(DoubleWritable x) {
-        this.x = x;
-    }
-
-    void setY(DoubleWritable y) {
-        this.y = y;
-    }
 }

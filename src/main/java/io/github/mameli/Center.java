@@ -3,9 +3,11 @@ package io.github.mameli;
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 
+import javax.annotation.Nonnull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by mameli on 18/02/2017.
@@ -13,37 +15,39 @@ import java.io.IOException;
  */
 public class Center extends Point {
 
-    private IntWritable index = new IntWritable(0);
+    private IntWritable index;
 
-    private IntWritable numberOfPoints = new IntWritable(0);
+    private IntWritable numberOfPoints;
 
-    Center(DoubleWritable x, DoubleWritable y, IntWritable index, IntWritable numberOfPoints) {
-        super(x, y);
+    Center(List<DoubleWritable> list, IntWritable index, IntWritable numberOfPoints) {
+        super(list);
         this.index = new IntWritable(index.get());
         this.numberOfPoints = new IntWritable(numberOfPoints.get());
     }
 
-    Center(DoubleWritable x, DoubleWritable y) {
-        setX(x);
-        setY(y);
+    Center() {
+        super();
     }
 
-    Center() {
-        setX(new DoubleWritable(0.0));
-        setY(new DoubleWritable(0.0));
+    Center(int n) {
+        super(n);
+        setNumberOfPoints(new IntWritable(0));
+    }
+
+    Center(List<DoubleWritable> l) {
+        super(l);
+        index = new IntWritable(0);
+        numberOfPoints = new IntWritable(0);
     }
 
     Center(Center c) {
-        setX(c.getX());
-        setY(c.getY());
+        super(c.getListOfParameters());
         setNumberOfPoints(c.getNumberOfPoints());
         setIndex(c.getIndex());
     }
 
     boolean isConverged(Center c, Double threshold) {
-        Double tempX = Math.pow(this.getX().get() - c.getX().get(), 2);
-        Double tempY = Math.pow(this.getY().get() - c.getY().get(), 2);
-        return threshold > Math.sqrt(tempX + tempY);
+        return threshold > Distance.findDistance(this, c);
     }
 
     public void readFields(DataInput dataInput) throws IOException {
@@ -58,8 +62,16 @@ public class Center extends Point {
         dataOutput.writeInt(numberOfPoints.get());
     }
 
+    @Override
+    public int compareTo(@Nonnull Center c) {
+        if (this.getIndex().get() == c.getIndex().get()) {
+            return 0;
+        }
+        return 1;
+    }
+
     public String toString() {
-        return "index: " + this.getIndex() + " " + super.toString() + "  n: " + numberOfPoints;
+        return this.getIndex() + ";" + super.toString();
     }
 
     IntWritable getIndex() {
@@ -70,11 +82,21 @@ public class Center extends Point {
         return numberOfPoints;
     }
 
-    private void setIndex(IntWritable index) {
+    void setIndex(IntWritable index) {
         this.index = new IntWritable(index.get());
     }
 
     void setNumberOfPoints(IntWritable numberOfPoints) {
         this.numberOfPoints = new IntWritable(numberOfPoints.get());
+    }
+
+    void divideParameters() {
+        for (int i = 0; i < this.getListOfParameters().size(); i++) {
+            this.getListOfParameters().set(i, new DoubleWritable(this.getListOfParameters().get(i).get() / numberOfPoints.get()));
+        }
+    }
+
+    void addNumberOfPoints(IntWritable i) {
+        this.numberOfPoints = new IntWritable(this.numberOfPoints.get() + i.get());
     }
 }
