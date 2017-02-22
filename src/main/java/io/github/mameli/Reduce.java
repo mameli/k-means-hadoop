@@ -9,17 +9,17 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * Created by mameli on 19/02/2017.
- * <p>
  * k means reducer
  */
 public class Reduce extends Reducer<Center, Point, IntWritable, Center> {
-
-    private List<Center> centers = new ArrayList<Center>();
+    private Logger logger = Logger.getLogger(Reduce.class);
+    private HashMap<IntWritable, Center> newCenters = new HashMap<IntWritable, Center>();
+    private HashMap<IntWritable, Center> oldCenters = new HashMap<IntWritable, Center>();
     private int iConvergedCenters = 0;
 
     public enum CONVERGE_COUNTER {
@@ -30,12 +30,18 @@ public class Reduce extends Reducer<Center, Point, IntWritable, Center> {
     public void reduce(Center key, Iterable<Point> values, Context context)
             throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
-        Logger logger = Logger.getLogger(Reduce.class);
+
         logger.fatal("Reducer ");
         logger.fatal("center: " + key.toString());
+        Center newCenter = new Center(conf.getInt("iParameters", 2));
+        boolean flagOld = false;
+        if (newCenters.containsKey(key.getIndex())) {
+            newCenter = newCenters.get(key.getIndex());
+            flagOld = true;
+        }
+
         int numElements = 0;
         Double temp;
-        Center newCenter = new Center(conf.getInt("iParameters", 2));
         for (Point p : values) {
             for (int i = 0; i < p.getListOfParameters().size(); i++) {
                 temp = newCenter.getListOfParameters().get(i).get() + p.getListOfParameters().get(i).get();
@@ -43,15 +49,14 @@ public class Reduce extends Reducer<Center, Point, IntWritable, Center> {
             }
             numElements += key.getNumberOfPoints().get();
         }
-        newCenter.divideParameters(numElements);
         newCenter.setIndex(key.getIndex());
-        newCenter.setNumberOfPoints(new IntWritable(0));
+        newCenter.addNumberOfPoints(new IntWritable(numElements));
 
-        if (key.isConverged(newCenter, conf.getDouble("threshold", 0.5)))
-            iConvergedCenters++;
+        if (!flagOld) {
+            newCenters.put(newCenter.getIndex(), newCenter);
+            oldCenters.put(key.getIndex(), new Center(key));
+        }
 
-        centers.add(newCenter);
-        logger.fatal("New center: " + newCenter.toString());
         context.write(newCenter.getIndex(), newCenter);
     }
 
@@ -66,11 +71,23 @@ public class Reduce extends Reducer<Center, Point, IntWritable, Center> {
                 SequenceFile.Writer.file(centersPath),
                 SequenceFile.Writer.keyClass(IntWritable.class),
                 SequenceFile.Writer.valueClass(Center.class));
-        for (Center c : centers) {
-            centerWriter.append(c.getIndex(), c);
+        Iterator<Center> it = newCenters.values().iterator();
+        Center temp;
+        while (it.hasNext()) {
+            temp = it.next();
+            temp.divideParameters();
+            logger.fatal("Media " + temp.toString());
+            logger.fatal("Old " + oldCenters.get(temp.getIndex()));
+            if (temp.isConverged(oldCenters.get(temp.getIndex()), conf.getDouble("threshold", 0.5)))
+                iConvergedCenters++;
+            centerWriter.append(temp.getIndex(), temp);
+
         }
-        if (iConvergedCenters == centers.size())
+
+        if (iConvergedCenters == newCenters.size())
             context.getCounter(CONVERGE_COUNTER.CONVERGED).increment(1);
         centerWriter.close();
+        logger.fatal("Converged " + iConvergedCenters);
     }
+
 }

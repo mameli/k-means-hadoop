@@ -30,7 +30,7 @@ public class Combine extends Reducer<Center, Point, Center, Point> {
             countValues++;
         }
         key.setNumberOfPoints(new IntWritable(countValues));
-        logger.fatal(key.toString() + " \tSum:" + sumValues.toString());
+        logger.fatal(key.toString() + " \t" + key.getNumberOfPoints().get() + " Sum:" + sumValues.toString());
         context.write(new Center(key), sumValues);
     }
 }

@@ -3,6 +3,7 @@ package io.github.mameli;
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 
+import javax.annotation.Nonnull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -30,6 +31,7 @@ public class Center extends Point {
 
     Center(int n) {
         super(n);
+        setNumberOfPoints(new IntWritable(0));
     }
 
     Center(List<DoubleWritable> l) {
@@ -60,8 +62,16 @@ public class Center extends Point {
         dataOutput.writeInt(numberOfPoints.get());
     }
 
+    @Override
+    public int compareTo(@Nonnull Center c) {
+        if (this.getIndex().get() == c.getIndex().get()) {
+            return 0;
+        }
+        return 1;
+    }
+
     public String toString() {
-        return this.getIndex() + ";";
+        return this.getIndex() + ";" + super.toString();
     }
 
     IntWritable getIndex() {
@@ -80,9 +90,13 @@ public class Center extends Point {
         this.numberOfPoints = new IntWritable(numberOfPoints.get());
     }
 
-    void divideParameters(int numElements) {
+    void divideParameters() {
         for (int i = 0; i < this.getListOfParameters().size(); i++) {
-            this.getListOfParameters().set(i, new DoubleWritable(this.getListOfParameters().get(i).get() / numElements));
+            this.getListOfParameters().set(i, new DoubleWritable(this.getListOfParameters().get(i).get() / numberOfPoints.get()));
         }
+    }
+
+    void addNumberOfPoints(IntWritable i) {
+        this.numberOfPoints = new IntWritable(this.numberOfPoints.get() + i.get());
     }
 }

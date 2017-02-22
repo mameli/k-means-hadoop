@@ -15,7 +15,7 @@ import java.util.List;
  * Created by mameli on 17/02/2017.
  * Point class
  */
-public class Point implements WritableComparable<Point> {
+public class Point implements WritableComparable<Center> {
 
     private List<DoubleWritable> listOfParameters;
 
@@ -59,17 +59,12 @@ public class Point implements WritableComparable<Point> {
         return elements;
     }
 
-    public int compareTo(@Nonnull Point p) {
-        int isEqual = 0;
-        for (int i = 0; i < listOfParameters.size(); i++) {
-            if (p.getListOfParameters().get(i).compareTo(this.listOfParameters.get(i)) != 0)
-                isEqual = 1;
-        }
-        return isEqual;
+    public int compareTo(@Nonnull Center p) {
+        return 0;
     }
 
 
-    public List<DoubleWritable> getListOfParameters() {
+    List<DoubleWritable> getListOfParameters() {
         return listOfParameters;
     }
 

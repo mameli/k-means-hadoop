@@ -49,7 +49,7 @@ public class Map extends Mapper<Object, Text, Center, Point> {
     public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
         String line = value.toString();
         List<DoubleWritable> spaceValues = new ArrayList<DoubleWritable>();
-        StringTokenizer tokenizer = new StringTokenizer(line, ",");
+        StringTokenizer tokenizer = new StringTokenizer(line, ";");
         while (tokenizer.hasMoreTokens()) {
             spaceValues.add(new DoubleWritable(Double.parseDouble(tokenizer.nextToken())));
         }
@@ -65,9 +65,9 @@ public class Map extends Mapper<Object, Text, Center, Point> {
                 minDistance = distanceTemp;
             }
         }
-        if (minDistanceCenter != null)
-            logger.fatal("P:" + p.toString() + " C min: " + minDistanceCenter.toString());
-        context.write(new Center(minDistanceCenter), p);
+//        if (minDistanceCenter != null)
+//            logger.fatal("P:" + p.toString() + " C min: " + minDistanceCenter.toString());
+        context.write(minDistanceCenter, p);
     }
 
 

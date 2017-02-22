@@ -34,12 +34,14 @@ public class KMeans {
         Path centers = new Path("centers/c.seq");
 
         conf.set("centersFilePath", centers.toString());
-        conf.setDouble("threshold", 0.01);
+        conf.setDouble("threshold", 0.05);
 
         int k = Integer.parseInt(args[2]);
         conf.setInt("k", k);
+        System.out.println("k: " + conf.getInt("k", 1));
         int iParameters = Integer.parseInt(args[3]);
         conf.setInt("iParameters", iParameters);
+        System.out.println("Parametri: " + conf.getInt("iParameters", 1));
 
         FileSystem fs = FileSystem.get(conf);
         if (fs.exists(output)) {
@@ -54,14 +56,14 @@ public class KMeans {
         createCenters(k, conf, centers);
 
         long isConverged = 0;
-
+        int iterations = 0;
         while (isConverged != 1) {
             Job job = Job.getInstance(conf, "K means");
             job.setJarByClass(KMeans.class);
             job.setMapperClass(Map.class);
             job.setCombinerClass(Combine.class);
-            job.setNumReduceTasks(1);
             job.setReducerClass(Reduce.class);
+            job.setNumReduceTasks(1);
 
             FileInputFormat.addInputPath(job, input);
             FileOutputFormat.setOutputPath(job, output);
@@ -73,9 +75,11 @@ public class KMeans {
             isConverged = job.getCounters().findCounter(Reduce.CONVERGE_COUNTER.CONVERGED).getValue();
             if (isConverged != 1)
                 fs.delete(output, true);
+            iterations++;
         }
 
         System.out.println("Output results: Centers and linked points");
+        System.out.println("Number of iterations\t" + iterations);
         fs.delete(output, true);
         Job job = Job.getInstance(conf, "K means");
         job.setJarByClass(KMeans.class);
@@ -90,6 +94,7 @@ public class KMeans {
     }
 
     private static void createCenters(int k, Configuration conf, Path centers) throws IOException {
+        System.out.println("Create centers");
         SequenceFile.Writer centerWriter = SequenceFile.createWriter(conf,
                 SequenceFile.Writer.file(centers),
                 SequenceFile.Writer.keyClass(IntWritable.class),
@@ -97,9 +102,11 @@ public class KMeans {
         Random r = new Random();
         List<DoubleWritable> listParameters = new ArrayList<DoubleWritable>();
         Center tempC;
+        Double temp;
         for (int i = 0; i < k; i++) {
             for (int j = 0; j < conf.getInt("iParameters", 2); j++) {
-                listParameters.add(new DoubleWritable(Math.floor(100.0 * r.nextDouble() * 100) / 100));
+                temp = Math.floor(100.0 * r.nextDouble() * 100) / 100;
+                listParameters.add(new DoubleWritable(temp));
             }
             tempC = new Center(listParameters, new IntWritable(i), new IntWritable(0));
             centerWriter.append(new IntWritable(i), tempC);
