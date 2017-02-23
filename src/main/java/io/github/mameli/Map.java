@@ -27,7 +27,7 @@ public class Map extends Mapper<Object, Text, Center, Point> {
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
-        logger.fatal("Centers stored in " + conf.get("centersFilePath"));
+       logger.fatal("Centers stored in " + conf.get("centersFilePath"));
         Path centersPath = new Path(conf.get("centersFilePath"));
         SequenceFile.Reader reader = new SequenceFile.Reader(conf, SequenceFile.Reader.file(centersPath));
         IntWritable key = new IntWritable();
@@ -36,12 +36,10 @@ public class Map extends Mapper<Object, Text, Center, Point> {
             Center c = new Center(value.getListOfParameters());
             c.setNumberOfPoints(new IntWritable(0));
             c.setIndex(key);
-            logger.info(c.getIndex());
             centers.add(c);
         }
         reader.close();
         logger.fatal("Centers: " + centers.toString());
-        logger.fatal("Setup end");
     }
 
     @Override
@@ -64,8 +62,6 @@ public class Map extends Mapper<Object, Text, Center, Point> {
                 minDistance = distanceTemp;
             }
         }
-//        if (minDistanceCenter != null)
-//            logger.fatal("P:" + p.toString() + " C min: " + minDistanceCenter.toString());
         context.write(minDistanceCenter, p);
     }
 

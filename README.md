@@ -2,6 +2,13 @@
 
 k-means clustering with Apache Hadoop
 
+### Build
+```
+mvn clean install
+```
+
+### Usage
+
 Generate the points (x;y , x;y;z etc.) for the data_set with the python script *generatePoints.py* (parameters, numPoints, range).
 ```
 python generatePoints.py 3 5 50 # 5 3d points in 0..50 range
@@ -34,6 +41,6 @@ python generatePoints.py 2 1000 300
 
 Example with k = 5, 1000 points
 ```
-python generatePoints.py 3 1000 300
+python generatePoints.py 3 1000 100
 ```
 ![3d](img/record.gif)

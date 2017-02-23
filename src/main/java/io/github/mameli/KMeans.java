@@ -30,23 +30,25 @@ public class KMeans {
         Configuration conf = new Configuration();
 
         Path input = new Path(args[0]);
-        Path output = new Path(args[1]);
+        Path output = new Path("output");
+        System.out.println("Input folder " + input.toString());
+        System.out.println("Output folder " + output.toString());
         Path centers = new Path("centers/c.seq");
 
         conf.set("centersFilePath", centers.toString());
         conf.setDouble("threshold", 0.5);
 
-        int k = Integer.parseInt(args[2]);
+        int k = Integer.parseInt(args[1]);
         conf.setInt("k", k);
         System.out.println("k: " + conf.getInt("k", 1));
-        int iParameters = Integer.parseInt(args[3]);
+        int iParameters = Integer.parseInt(args[2]);
         conf.setInt("iParameters", iParameters);
         System.out.println("Parameters: " + conf.getInt("iParameters", 1));
         Job job;
 
         FileSystem fs = FileSystem.get(conf);
         if (fs.exists(output)) {
-            System.out.println("Delete old output folder: " + args[1]);
+            System.out.println("Delete old output folder: " + output.toString());
             fs.delete(output, true);
         }
         if (fs.exists(centers)) {

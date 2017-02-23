@@ -31,8 +31,6 @@ public class Reduce extends Reducer<Center, Point, IntWritable, Center> {
             throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
 
-        logger.fatal("Reducer ");
-        logger.fatal("center: " + key.toString());
         Center newCenter = new Center(conf.getInt("iParameters", 2));
         boolean flagOld = false;
         if (newCenters.containsKey(key.getIndex())) {

@@ -16,7 +16,6 @@ public class Combine extends Reducer<Center, Point, Center, Point> {
     @Override
     public void reduce(Center key, Iterable<Point> values, Context context)
             throws IOException, InterruptedException {
-        Logger logger = Logger.getLogger(Reduce.class);
         Configuration conf = context.getConfiguration();
 
         Point sumValues = new Point(conf.getInt("iParameters", 2));
