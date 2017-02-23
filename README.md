@@ -32,8 +32,8 @@ python generatePoints.py 2 1000 300
 ```
 ![2d](img/2d.png)
 
-Example with k = 7, 1000 points
+Example with k = 5, 1000 points
 ```
 python generatePoints.py 3 1000 300
 ```
-![3d](img/3d.png)
+![3d](img/record.gif)
