@@ -22,3 +22,10 @@ input/
 out/
 output/
 centers/
+tempResults/
+
+## Core latex/pdflatex auxiliary files:
+*.aux
+*.log
+*.sty
+*.gz

@@ -1,7 +1,6 @@
 package io.github.mameli;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.SequenceFile;
@@ -31,7 +30,7 @@ public class Reduce extends Reducer<Center, Point, IntWritable, Center> {
             throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
 
-        Center newCenter = new Center(conf.getInt("iParameters", 2));
+        Center newCenter = new Center(conf.getInt("iCoordinates", 2));
         boolean flagOld = false;
         if (newCenters.containsKey(key.getIndex())) {
             newCenter = newCenters.get(key.getIndex());
@@ -41,9 +40,9 @@ public class Reduce extends Reducer<Center, Point, IntWritable, Center> {
         int numElements = 0;
         Double temp;
         for (Point p : values) {
-            for (int i = 0; i < p.getListOfParameters().size(); i++) {
-                temp = newCenter.getListOfParameters().get(i).get() + p.getListOfParameters().get(i).get();
-                newCenter.getListOfParameters().get(i).set(temp);
+            for (int i = 0; i < p.getListOfCoordinates().size(); i++) {
+                temp = newCenter.getListOfCoordinates().get(i).get() + p.getListOfCoordinates().get(i).get();
+                newCenter.getListOfCoordinates().get(i).set(temp);
             }
             numElements += key.getNumberOfPoints().get();
         }
@@ -60,35 +59,35 @@ public class Reduce extends Reducer<Center, Point, IntWritable, Center> {
 
     @Override
     protected void cleanup(Context context) throws IOException, InterruptedException {
-        super.cleanup(context);
         Configuration conf = context.getConfiguration();
         Path centersPath = new Path(conf.get("centersFilePath"));
-        FileSystem fs = FileSystem.get(conf);
-        fs.delete(centersPath, true);
         SequenceFile.Writer centerWriter = SequenceFile.createWriter(conf,
                 SequenceFile.Writer.file(centersPath),
                 SequenceFile.Writer.keyClass(IntWritable.class),
                 SequenceFile.Writer.valueClass(Center.class));
         Iterator<Center> it = newCenters.values().iterator();
-        Center temp;
+        Center newCenterValue;
+        Center sameIndexC;
         Double avgValue = 0.0;
         Double threshold = conf.getDouble("threshold", 0.5);
         int k = conf.getInt("k", 2);
         while (it.hasNext()) {
-            temp = it.next();
-            temp.divideParameters();
-            Center sameIndexC = oldCenters.get(temp.getIndex());
-            if (temp.isConverged(sameIndexC, threshold))
+            newCenterValue = it.next();
+            newCenterValue.divideCoordinates();
+            sameIndexC = oldCenters.get(newCenterValue.getIndex());
+            if (newCenterValue.isConverged(sameIndexC, threshold))
                 iConvergedCenters++;
-            avgValue += Math.pow(Distance.findDistance(temp, sameIndexC), 2);
-            centerWriter.append(temp.getIndex(), temp);
+            avgValue += Math.pow(Distance.findDistance(newCenterValue, sameIndexC), 2);
+            centerWriter.append(newCenterValue.getIndex(), newCenterValue);
         }
         avgValue = Math.sqrt(avgValue / k);
-        System.out.println("standard deviation " + avgValue);
-        if (iConvergedCenters == newCenters.size() || avgValue < threshold)
+        logger.fatal("Convergence value: " + avgValue);
+        int percentSize = (newCenters.size() * 90) / 100;
+        logger.fatal("Percent value: " + percentSize);
+        if (iConvergedCenters >= percentSize || avgValue < threshold)
             context.getCounter(CONVERGE_COUNTER.CONVERGED).increment(1);
         centerWriter.close();
-        logger.fatal("Converged " + iConvergedCenters);
+        logger.fatal("Converged centers: " + iConvergedCenters);
     }
 
 }

@@ -17,43 +17,43 @@ import java.util.List;
  */
 public class Point implements WritableComparable<Center> {
 
-    private List<DoubleWritable> listOfParameters;
+    private List<DoubleWritable> listOfCoordinates;
 
-    Point(List<DoubleWritable> listOfParameters) {
-        this.listOfParameters = new ArrayList<DoubleWritable>();
-        for (DoubleWritable p : listOfParameters) {
-            this.listOfParameters.add(p);
+    Point(List<DoubleWritable> listOfCoordinates) {
+        this.listOfCoordinates = new ArrayList<DoubleWritable>();
+        for (DoubleWritable p : listOfCoordinates) {
+            this.listOfCoordinates.add(p);
         }
     }
 
     Point() {
-        listOfParameters = new ArrayList<DoubleWritable>();
+        listOfCoordinates = new ArrayList<DoubleWritable>();
     }
 
     Point(int n) {
-        listOfParameters = new ArrayList<DoubleWritable>();
+        listOfCoordinates = new ArrayList<DoubleWritable>();
         for (int i = 0; i < n; i++)
-            listOfParameters.add(new DoubleWritable(0.0));
+            listOfCoordinates.add(new DoubleWritable(0.0));
     }
 
     public void readFields(DataInput dataInput) throws IOException {
         int iParams = dataInput.readInt();
-        listOfParameters = new ArrayList<DoubleWritable>();
+        listOfCoordinates = new ArrayList<DoubleWritable>();
         for (int i = 0; i < iParams; i++) {
-            listOfParameters.add(new DoubleWritable(dataInput.readDouble()));
+            listOfCoordinates.add(new DoubleWritable(dataInput.readDouble()));
         }
     }
 
     public void write(DataOutput dataOutput) throws IOException {
-        dataOutput.writeInt(listOfParameters.size());
-        for (DoubleWritable p : listOfParameters) {
+        dataOutput.writeInt(listOfCoordinates.size());
+        for (DoubleWritable p : listOfCoordinates) {
             dataOutput.writeDouble(p.get());
         }
     }
 
     public String toString() {
         String elements = "";
-        for (DoubleWritable e : listOfParameters) {
+        for (DoubleWritable e : listOfCoordinates) {
             elements += e.get() + ";";
         }
         return elements;
@@ -64,8 +64,8 @@ public class Point implements WritableComparable<Center> {
     }
 
 
-    List<DoubleWritable> getListOfParameters() {
-        return listOfParameters;
+    List<DoubleWritable> getListOfCoordinates() {
+        return listOfCoordinates;
     }
 
 }
