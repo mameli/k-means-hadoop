@@ -5,13 +5,28 @@ k-means clustering with Apache Hadoop
 ### Build
 ```
 mvn clean install
+hadoop jar target/k-means.jar \
+            PATH_INPUT \
+            PATH_OUTPUT \
+            NUM_K \
+            NUM_COORDINATES \
+            THRESHOLD
+```
+Example
+```
+hadoop jar target/k-means.jar \
+            input \
+            output \
+            7 \
+            3 \
+            0.0005
 ```
 
 ### Usage
 
 Generate the points (x;y , x;y;z etc.) for the data_set with the python script *generatePoints.py* (parameters, numPoints, range).
 ```
-python generatePoints.py 3 5 50 # 5 3d points in 0..50 range
+python generatePoints.py 3 5 50 # 5 3d points in -50..50 range
 ```
 Output in *input/data_set*:
 ```
@@ -28,6 +43,7 @@ The main class is *KMeans.java* and the args are:
 + output folder
 + number of clusters *K*
 + number of parameters
++ threshold 
 
 Use *plot2d.py* or *plot3d.py* to plot the results
 

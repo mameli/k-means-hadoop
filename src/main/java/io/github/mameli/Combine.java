@@ -3,7 +3,6 @@ package io.github.mameli;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.log4j.Logger;
 
 import java.io.IOException;
 
@@ -18,17 +17,17 @@ public class Combine extends Reducer<Center, Point, Center, Point> {
             throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
 
-        Point sumValues = new Point(conf.getInt("iParameters", 2));
+        Point sumValues = new Point(conf.getInt("iCoordinates", 2));
         int countValues = 0;
         Double temp;
         for (Point p : values) {
-            for (int i = 0; i < p.getListOfParameters().size(); i++) {
-                temp = sumValues.getListOfParameters().get(i).get() + p.getListOfParameters().get(i).get();
-                sumValues.getListOfParameters().get(i).set(temp);
+            for (int i = 0; i < p.getListOfCoordinates().size(); i++) {
+                temp = sumValues.getListOfCoordinates().get(i).get() + p.getListOfCoordinates().get(i).get();
+                sumValues.getListOfCoordinates().get(i).set(temp);
             }
             countValues++;
         }
         key.setNumberOfPoints(new IntWritable(countValues));
-        context.write(new Center(key), sumValues);
+        context.write(key, sumValues);
     }
 }

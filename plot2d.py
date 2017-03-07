@@ -30,7 +30,7 @@ if __name__ == "__main__":
             xCluster = []
             yCluster = []
             for el in file_content:
-                cluster.append(int(el[0]))
+                cluster.append(float(el[0]) + 999)
                 xCluster.append(float(el[1]))
                 yCluster.append(float(el[2]))
                 x.append(float(el[3]))
@@ -38,5 +38,5 @@ if __name__ == "__main__":
             print("Punti: " + str(len(x)))
             colors = np.random.rand(50)
             plt.scatter(x, y, s=50, c=cluster, alpha=0.5)
-            plt.scatter(xCluster, yCluster, s=70, c=cluster, alpha=0.1, marker= '*')
+            plt.scatter(xCluster, yCluster, s=70, c=cluster, alpha=0.1, marker='*')
             plt.show()

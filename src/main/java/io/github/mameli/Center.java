@@ -41,13 +41,9 @@ public class Center extends Point {
     }
 
     Center(Center c) {
-        super(c.getListOfParameters());
+        super(c.getListOfCoordinates());
         setNumberOfPoints(c.getNumberOfPoints());
         setIndex(c.getIndex());
-    }
-
-    boolean isConverged(Center c, Double threshold) {
-        return threshold > Distance.findDistance(this, c);
     }
 
     public void readFields(DataInput dataInput) throws IOException {
@@ -70,8 +66,22 @@ public class Center extends Point {
         return 1;
     }
 
+    boolean isConverged(Center c, Double threshold) {
+        return threshold > Distance.findDistance(this, c);
+    }
+
     public String toString() {
         return this.getIndex() + ";" + super.toString();
+    }
+
+    void divideCoordinates() {
+        for (int i = 0; i < this.getListOfCoordinates().size(); i++) {
+            this.getListOfCoordinates().set(i, new DoubleWritable(this.getListOfCoordinates().get(i).get() / numberOfPoints.get()));
+        }
+    }
+
+    void addNumberOfPoints(IntWritable i) {
+        this.numberOfPoints = new IntWritable(this.numberOfPoints.get() + i.get());
     }
 
     IntWritable getIndex() {
@@ -88,15 +98,5 @@ public class Center extends Point {
 
     void setNumberOfPoints(IntWritable numberOfPoints) {
         this.numberOfPoints = new IntWritable(numberOfPoints.get());
-    }
-
-    void divideParameters() {
-        for (int i = 0; i < this.getListOfParameters().size(); i++) {
-            this.getListOfParameters().set(i, new DoubleWritable(this.getListOfParameters().get(i).get() / numberOfPoints.get()));
-        }
-    }
-
-    void addNumberOfPoints(IntWritable i) {
-        this.numberOfPoints = new IntWritable(this.numberOfPoints.get() + i.get());
     }
 }

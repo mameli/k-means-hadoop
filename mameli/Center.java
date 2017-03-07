@@ -95,7 +95,7 @@ public class Center extends Point {
         }
     }
 
-    void addNumberOfPoints(IntWritable i) {
+    void addNumOfPoints(IntWritable i) {
         this.numberOfPoints = new IntWritable(this.numberOfPoints.get() + i.get());
     }
 }
